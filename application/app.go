@@ -7,7 +7,7 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/superlogarifm/goCalc/calculate"
+	calculate "github.com/superlogarifm/goCalc-v2/internal/calculator"
 )
 
 type Config struct {

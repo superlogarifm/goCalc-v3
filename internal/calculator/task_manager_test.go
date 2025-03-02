@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/superlogarifm/goCalc/internal/models"
+	"github.com/superlogarifm/goCalc-v2/internal/models"
 )
 
 func TestTaskManager_CreateExpression(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"sync"
 	"sync/atomic"
 
-	"github.com/superlogarifm/goCalc/internal/models"
+	"github.com/superlogarifm/goCalc-v2/internal/models"
 )
 
 type TaskManager struct {

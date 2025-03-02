@@ -8,8 +8,8 @@ import (
 	"os"
 	"strings"
 
-	"github.com/superlogarifm/goCalc/internal/calculator"
-	"github.com/superlogarifm/goCalc/internal/models"
+	"github.com/superlogarifm/goCalc-v2/internal/calculator"
+	"github.com/superlogarifm/goCalc-v2/internal/models"
 )
 
 type Orchestrator struct {

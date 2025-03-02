@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/superlogarifm/goCalc/internal/models"
+	"github.com/superlogarifm/goCalc-v2/internal/models"
 )
 
 type Agent struct {

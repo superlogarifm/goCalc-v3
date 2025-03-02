@@ -6,7 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/superlogarifm/goCalc/internal/models"
+	"github.com/superlogarifm/goCalc-v2/internal/models"
 )
 
 func TestAgent_ProcessTask(t *testing.T) {
