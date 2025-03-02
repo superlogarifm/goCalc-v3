@@ -47,12 +47,6 @@ go run cmd/orchestrator/main.go
 go run cmd/agent/main.go
 ```
 
-#### Запуск сервиса калькулятора
-
-```bash
-go run cmd/calc_service/main.go
-```
-
 ### Запуск с использованием Docker Compose
 
 Для запуска всех компонентов системы в Docker-контейнерах:
@@ -87,42 +81,18 @@ docker-compose up -d --build
 
 ## 📡 API и отправка запросов
 
-### Отправка математических операций
-
-#### Запрос на выполнение операции
-
-```bash
-curl -X POST http://localhost:8080/calculate \
-  -H "Content-Type: application/json" \
-  -d '{"operation": "addition", "operand1": 10, "operand2": 5}'
-```
-
 Поддерживаемые операции:
 - `addition` - сложение
 - `subtraction` - вычитание
 - `multiplication` - умножение
 - `division` - деление
 
-#### Пример ответа
-
-```json
-{
-  "result": 15,
-  "operation": "addition",
-  "operand1": 10,
-  "operand2": 5,
-  "processing_time_ms": 2500
-}
-```
-
 ### Отправка математических выражений
 
 #### Запрос на выполнение выражения
 
 ```bash
-curl -X POST http://localhost:8080/api/v1/expressions \
-  -H "Content-Type: application/json" \
-  -d '{"expression": "2+2*2"}'
+curl --location 'localhost:8080/api/v1/calculate' --header 'Content-Type: application/json' --data '{"expression": "2+2*2"}'
 ```
 
 #### Пример ответа
@@ -138,7 +108,7 @@ curl -X POST http://localhost:8080/api/v1/expressions \
 ### Получение статуса выражения
 
 ```bash
-curl -X GET http://localhost:8080/api/v1/expressions/1
+curl --location 'localhost:8080/api/v1/expressions/1'
 ```
 
 #### Пример ответа
@@ -149,67 +119,8 @@ curl -X GET http://localhost:8080/api/v1/expressions/1
   "expression": "2+2*2",
   "status": "completed",
   "result": 6,
-  "processing_time_ms": 3500
 }
 ```
-
-### Получение статуса агентов
-
-```bash
-curl -X GET http://localhost:8080/agents
-```
-
-#### Пример ответа
-
-```json
-{
-  "agents": [
-    {
-      "id": "agent1",
-      "computing_power": 2,
-      "status": "available"
-    },
-    {
-      "id": "agent2",
-      "computing_power": 2,
-      "status": "busy"
-    }
-  ]
-}
-```
-
-## 📝 Примеры использования
-
-### Пример выполнения сложения
-
-```bash
-curl -X POST http://localhost:8080/calculate \
-  -H "Content-Type: application/json" \
-  -d '{"operation": "addition", "operand1": 10, "operand2": 5}'
-```
-
-### Пример выполнения математического выражения
-
-```bash
-curl -X POST http://localhost:8080/api/v1/expressions \
-  -H "Content-Type: application/json" \
-  -d '{"expression": "10+5*2"}'
-```
-
-### Пример получения результата выражения
-
-```bash
-curl -X GET http://localhost:8080/api/v1/expressions/expr-123456
-```
-
-### Пример выполнения деления
-
-```bash
-curl -X POST http://localhost:8080/calculate \
-  -H "Content-Type: application/json" \
-  -d '{"operation": "division", "operand1": 10, "operand2": 2}'
-```
-
 ## ⚠️ Устранение неполадок
 
 ### Проблемы с подключением к оркестратору
@@ -230,7 +141,4 @@ docker-compose logs agent1
 docker-compose logs agent2
 ```
 
-## 📄 Лицензия
-
-[MIT License](LICENSE)
  
