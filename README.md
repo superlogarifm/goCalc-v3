@@ -184,7 +184,7 @@ go mod download
     --header "Authorization: Bearer $TOKEN" \
     --header 'Content-Type: application/json' \
     --data '{
-        "expression": "(10+5)*2-3/1.5"
+        "expression": "2+2"
     }'
     ```
 
