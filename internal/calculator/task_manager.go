@@ -8,8 +8,9 @@ import (
 	"strings"
 	"sync"
 	"sync/atomic"
+	"time"
 
-	"github.com/superlogarifm/goCalc-v2/internal/models"
+	"github.com/superlogarifm/goCalc-v3/internal/models"
 )
 
 type TaskManager struct {
@@ -91,7 +92,6 @@ func (tm *TaskManager) createTasks(node *Node, exprID string) {
 			OperationTime: getOperationTime(node.Token.Value),
 		}
 
-		// Определяем аргументы задачи
 		if node.Left.Token.Type == Number {
 			task.Arg1 = node.Left.Token.Value
 		} else {
@@ -239,4 +239,63 @@ func (tm *TaskManager) GetAllExpressions() []models.Expression {
 		return true
 	})
 	return expressions
+}
+
+func (tm *TaskManager) StartInternalWorker() {
+	log.Println("Starting TaskManager internal worker...")
+	go func() {
+		for {
+			task, ok := tm.GetNextTask()
+			if !ok {
+				time.Sleep(100 * time.Millisecond)
+				continue
+			}
+
+			log.Printf("Internal worker picked up task ID: %s (%s %s %s)", task.ID, task.Arg1, task.Operation, task.Arg2)
+
+			arg1, err1 := strconv.ParseFloat(task.Arg1, 64)
+			arg2, err2 := strconv.ParseFloat(task.Arg2, 64)
+
+			if err1 != nil || err2 != nil {
+				log.Printf("Error parsing arguments for task %s: %v, %v. Skipping.", task.ID, err1, err2)
+				// tm.UpdateTaskResult(models.TaskResult{ID: task.ID, Error: fmt.Errorf("invalid arguments")})
+				continue
+			}
+
+			var resultValue float64
+			var calcError error
+
+			switch task.Operation {
+			case "+":
+				resultValue = arg1 + arg2
+			case "-":
+				resultValue = arg1 - arg2
+			case "*":
+				resultValue = arg1 * arg2
+			case "/":
+				if arg2 == 0 {
+					calcError = fmt.Errorf("division by zero")
+				} else {
+					resultValue = arg1 / arg2
+				}
+			default:
+				calcError = fmt.Errorf("unknown operation: %s", task.Operation)
+			}
+
+			if calcError != nil {
+				log.Printf("Error calculating task %s: %v", task.ID, calcError)
+				continue
+			}
+
+			taskResult := models.TaskResult{
+				ID:     task.ID,
+				Result: resultValue,
+			}
+
+			if err := tm.UpdateTaskResult(taskResult); err != nil {
+				log.Printf("Error updating task result for task %s in internal worker: %v", task.ID, err)
+			}
+		}
+	}()
+	log.Println("TaskManager internal worker started.")
 }
