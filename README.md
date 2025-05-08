@@ -1,4 +1,4 @@
-# goCalc-v2 - Распределенный Калькулятор с Аутентификацией
+# goCalc-v3 - Распределенный Калькулятор с Аутентификацией
 
 <div align="center">
   <img src="https://img.shields.io/badge/Go-1.20+-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go 1.20+"/>
