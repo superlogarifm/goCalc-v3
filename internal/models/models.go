@@ -32,12 +32,15 @@ type Task struct {
 	Operation     string   `json:"operation"`
 	OperationTime int64    `json:"operation_time"`
 	Result        *float64 `json:"result,omitempty"`
+	ExpressionID  string   `json:"expression_id,omitempty"` // ID выражения, к которому относится задача
+	Error         *string  `json:"error,omitempty"`         // Поле для хранения ошибки выполнения задачи
 }
 
 // результат выполнения задачи
 type TaskResult struct {
 	ID     string  `json:"id" binding:"required"`
 	Result float64 `json:"result" binding:"required"`
+	Error  *string `json:"error,omitempty"`
 }
 
 // ответ со списком выражений

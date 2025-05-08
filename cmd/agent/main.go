@@ -101,43 +101,58 @@ func (a *Agent) submitResult(result models.TaskResult) error {
 func (a *Agent) processTask(task models.Task) error {
 	time.Sleep(time.Duration(task.OperationTime) * time.Millisecond) // Имитация длительного вычисления
 
+	taskResult := models.TaskResult{ID: task.ID}
+
 	if strings.HasPrefix(task.Arg1, "task:") || strings.HasPrefix(task.Arg2, "task:") {
-		log.Printf("Task %s has unresolved dependencies, returning to queue", task.ID)
+		log.Printf("Task %s (ExprID: %s) has unresolved dependencies, returning to queue", task.ID, task.ExpressionID)
+		// В этом случае агент не должен отправлять результат, т.к. задача не его.
+		// Оркестратор должен сам перевыставить задачу, когда зависимости разрешатся.
+		// Однако, для консистентности, можно было бы отправить ошибку "unresolved_dependencies".
+		// Но текущая логика оркестратора в GetNextTask уже обрабатывает это, возвращая задачу в очередь.
+		// Поэтому здесь просто выходим, не отправляя результат.
 		return nil
 	}
 
-	// Преобразуем аргументы в числа
-	arg1, err := strconv.ParseFloat(task.Arg1, 64)
-	if err != nil {
-		return fmt.Errorf("invalid argument 1: %v", err)
+	arg1, err1 := strconv.ParseFloat(task.Arg1, 64)
+	arg2, err2 := strconv.ParseFloat(task.Arg2, 64)
+
+	if err1 != nil || err2 != nil {
+		errMsg := fmt.Sprintf("invalid arguments for task %s (ExprID: %s): arg1='%s', arg2='%s', err1=%v, err2=%v", task.ID, task.ExpressionID, task.Arg1, task.Arg2, err1, err2)
+		log.Printf("Error processing task: %s", errMsg)
+		taskResult.Error = &errMsg
+		return a.submitResult(taskResult)
 	}
 
-	arg2, err := strconv.ParseFloat(task.Arg2, 64)
-	if err != nil {
-		return fmt.Errorf("invalid argument 2: %v", err)
-	}
-	var result float64
+	var operationResult float64
+	var calcError error
+
 	switch task.Operation {
 	case "+":
-		result = arg1 + arg2
+		operationResult = arg1 + arg2
 	case "-":
-		result = arg1 - arg2
+		operationResult = arg1 - arg2
 	case "*":
-		result = arg1 * arg2
+		operationResult = arg1 * arg2
 	case "/":
 		if arg2 == 0 {
-			return fmt.Errorf("division by zero")
+			calcError = fmt.Errorf("division by zero")
+		} else {
+			operationResult = arg1 / arg2
 		}
-		result = arg1 / arg2
 	default:
-		return fmt.Errorf("unknown operation: %s", task.Operation)
+		calcError = fmt.Errorf("unknown operation: %s", task.Operation)
 	}
 
-	log.Printf("Task %s completed: %f %s %f = %f", task.ID, arg1, task.Operation, arg2, result)
-	return a.submitResult(models.TaskResult{
-		ID:     task.ID,
-		Result: result,
-	})
+	if calcError != nil {
+		errMsg := fmt.Sprintf("error calculating task %s (ExprID: %s): %v", task.ID, task.ExpressionID, calcError)
+		log.Printf("Error processing task: %s", errMsg)
+		taskResult.Error = &errMsg
+		return a.submitResult(taskResult)
+	}
+
+	taskResult.Result = operationResult
+	log.Printf("Task %s (ExprID: %s) completed: %f %s %f = %f", task.ID, task.ExpressionID, arg1, task.Operation, arg2, operationResult)
+	return a.submitResult(taskResult)
 }
 
 func (a *Agent) worker(wg *sync.WaitGroup) {
@@ -156,7 +171,7 @@ func (a *Agent) worker(wg *sync.WaitGroup) {
 		}
 
 		if err := a.processTask(*task); err != nil {
-			log.Printf("Error processing task: %v", err)
+			log.Printf("Error submitting result for task %s (ExprID: %s): %v", task.ID, task.ExpressionID, err)
 		}
 	}
 }

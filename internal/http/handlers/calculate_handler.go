@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 	"strings"
@@ -40,17 +42,26 @@ func (h *CalculateHandler) HandleCalculate(w http.ResponseWriter, r *http.Reques
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	bodyBytes, err := io.ReadAll(r.Body)
+	if err != nil {
+		log.Printf("Error reading request body: %v\n", err)
+		http.Error(w, `{"error": "Failed to read request body"}`, http.StatusInternalServerError)
+		return
+	}
+	r.Body.Close()
+	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
+	log.Printf("Raw request body: %s\n", string(bodyBytes))
 
 	var req CalculateRequest
 	w.Header().Set("Content-Type", "application/json")
 
 	decoder := json.NewDecoder(r.Body)
-	err := decoder.Decode(&req)
+	err = decoder.Decode(&req)
 	if err != nil {
+		log.Printf("Error decoding JSON request body: %v\n", err)
 		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
 		return
 	}
-	defer r.Body.Close()
 
 	if req.Expression == "" {
 		http.Error(w, `{"error": "Expression cannot be empty"}`, http.StatusBadRequest)
@@ -63,6 +74,7 @@ func (h *CalculateHandler) HandleCalculate(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(CalculateResponse{ExpressionID: expressionID})
 }

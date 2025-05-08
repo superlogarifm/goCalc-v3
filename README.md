@@ -133,7 +133,7 @@ go mod download
     *   `409 Conflict` (Пользователь с таким логином уже существует)
     *   `500 Internal Server Error`
 
-*   **Пример `curl`:**
+*   **Пример `curl` (Успешная регистрация):**
     ```bash
     curl --location 'localhost:8080/api/v1/register' \
     --header 'Content-Type: application/json' \
@@ -142,6 +142,18 @@ go mod download
         "password": "mypassword"
     }'
     ```
+
+*   **Пример `curl` (Ошибка - пользователь уже существует):**
+    Предполагается, что пользователь "myuser" уже зарегистрирован. Повторный запрос с теми же данными приведет к ошибке.
+    ```bash
+    curl --location 'localhost:8080/api/v1/register' \
+    --header 'Content-Type: application/json' \
+    --data '{
+        "login": "myuser",
+        "password": "mypassword"
+    }'
+    ```
+    *Ожидаемый ответ сервера (примерный):* `409 User with this login already exists` с сообщением о том, что пользователь уже существует.
 
 #### Вход пользователя
 
@@ -164,42 +176,7 @@ go mod download
     *   `401 Unauthorized` (Неверный логин или пароль)
     *   `500 Internal Server Error`
 
-*   **Пример `curl`:**
-    ```bash
-    curl --location 'localhost:8080/api/v1/login' \
-    --header 'Content-Type: application/json' \
-    --data '{
-        "login": "myuser",
-        "password": "mypassword"
-    }'
-    ```
-    *(Скопируйте полученный `token` для следующих запросов)*
-
-### Вычисления (Требуется аутентификация)
-
-#### Отправка выражения на вычисление
-
-*   **Эндпоинт:** `POST /api/v1/calculate`
-*   **Заголовок:** `Authorization: Bearer <your_jwt_token_here>`
-*   **Тело запроса:** `application/json`
-    ```json
-    {
-      "expression": "2+2*2"
-    }
-    ```
-*   **Ответ (Успех):** `200 OK` с телом:
-    ```json
-    {
-      "result": 6
-    }
-    ```
-*   **Ответ (Ошибка):**
-    *   `400 Bad Request` (Неверное тело запроса, пустое выражение)
-    *   `401 Unauthorized` (Нет токена, неверный токен, истекший токен)
-    *   `422 Unprocessable Entity` (Ошибка вычисления выражения, например, деление на ноль)
-    *   `500 Internal Server Error`
-
-*   **Пример `curl` (замените `YOUR_TOKEN`):**
+*   **Пример `curl` (Успешное вычисление, замените `YOUR_TOKEN`):**
     ```bash
     TOKEN="YOUR_TOKEN" # Вставьте сюда токен, полученный при логине
 
@@ -210,6 +187,19 @@ go mod download
         "expression": "(10+5)*2-3/1.5"
     }'
     ```
+
+*   **Пример `curl` (Ошибка вычисления - синтаксическая ошибка, замените `YOUR_TOKEN`):**
+    ```bash
+    TOKEN="YOUR_TOKEN"
+
+    curl --location 'localhost:8080/api/v1/calculate' \
+    --header "Authorization: Bearer $TOKEN" \
+    --header 'Content-Type: application/json' \
+    --data '{
+        "expression": "2+" 
+    }'
+    ```
+    *Ожидаемый ответ сервера (примерный):* `422 Unprocessable Entity` с сообщением о синтаксической ошибке в выражении.
 
 #### Получение статуса и результата выражения
 
@@ -245,6 +235,47 @@ go mod download
     EXPRESSION_ID="YOUR_EXPRESSION_ID" # ID, полученный от /api/v1/calculate
 
     curl --location "localhost:8080/api/v1/expressions/$EXPRESSION_ID" \
+    --header "Authorization: Bearer $TOKEN"
+    ```
+
+#### Получение списка всех выражений
+
+*   **Эндпоинт:** `GET /api/v1/expressions`
+*   **Заголовок:** `Authorization: Bearer <your_jwt_token_here>`
+*   **Ответ (Успех):** `200 OK` с телом, содержащим список выражений:
+    ```json
+    {
+      "expressions": [
+        {
+          "id": "1",
+          "expression": "2+2",
+          "status": "completed",
+          "result": 4.0
+        },
+        {
+          "id": "2",
+          "expression": "5/0",
+          "status": "error",
+          "error": "division by zero"
+        },
+        {
+          "id": "3",
+          "expression": "10*5-(2+2)",
+          "status": "processing"
+        }
+      ]
+    }
+    ```
+    *   Поля `result` и `error` будут присутствовать в зависимости от статуса каждого выражения.
+*   **Ответ (Ошибка):**
+    *   `401 Unauthorized` (Нет токена, неверный токен, истекший токен)
+    *   `500 Internal Server Error`
+
+*   **Пример `curl` (замените `YOUR_TOKEN`):**
+    ```bash
+    TOKEN="YOUR_TOKEN" 
+
+    curl --location "localhost:8080/api/v1/expressions" \
     --header "Authorization: Bearer $TOKEN"
     ```
 
