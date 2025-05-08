@@ -27,8 +27,8 @@
 ### 1. Клонирование репозитория
 
 ```bash
-git clone https://github.com/superlogarifm/goCalc-v2.git
-cd goCalc-v2
+git clone https://github.com/superlogarifm/goCalc-v3.git
+cd goCalc-v3
 ```
 
 ### 2. Установка зависимостей
